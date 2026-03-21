@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  MANAGER
+  DRIVER
+}
+
+enum AvailabilityStatus {
+  FREE
+  LOCKED
+}
+
+enum ShiftStatus {
+  OPEN
+  ASSIGNED
+}
+
+enum WhereNeeded {
+  DHL
+  DRAGONFLY
+}
+
+enum ShiftBlockType {
+  DHL_OCHTEND
+  DHL_MIDDAG
+  DHL_AVOND
+  DHL_HELEDAG
+  DRAGONFLY
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  availabilities Availability[]
+  assignments    Assignment[]
+
+  @@map("users")
+}
+
+model Availability {
+  id       String             @id @default(cuid())
+  userId   String
+  date     String // YYYY-MM-DD
+  startHour Int
+  endHour   Int
+  status   AvailabilityStatus @default(FREE)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, date])
+  @@map("availabilities")
+}
+
+model Shift {
+  id        String     @id @default(cuid())
+  date      String // YYYY-MM-DD
+  blockType ShiftBlockType
+  whereNeeded WhereNeeded
+  startHour Int
+  endHour   Int
+  status    ShiftStatus @default(OPEN)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  assignment Assignment?
+
+  @@index([date, status])
+  @@map("shifts")
+}
+
+model Assignment {
+  id        String   @id @default(cuid())
+  shiftId   String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@map("assignments")
+}
