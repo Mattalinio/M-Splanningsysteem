@@ -50,6 +50,7 @@ model User {
   // Relations
   availabilities Availability[]
   assignments    Assignment[]
+  timeEntries    TimeEntry[]
 
   @@map("users")
 }
@@ -83,7 +84,8 @@ model Shift {
   updatedAt DateTime   @updatedAt
 
   // Relations
-  assignment Assignment?
+  assignment  Assignment?
+  timeEntries TimeEntry[]
 
   @@index([date, status])
   @@map("shifts")
@@ -101,4 +103,20 @@ model Assignment {
 
   @@index([userId, createdAt])
   @@map("assignments")
+}
+
+model TimeEntry {
+  id         String   @id @default(cuid())
+  driverId   String
+  driver     User     @relation(fields: [driverId], references: [id])
+  shiftId    String?
+  shift      Shift?   @relation(fields: [shiftId], references: [id])
+  date       DateTime
+  startTime  String
+  endTime    String
+  totalHours Float
+  company    String   @default("dragonfly")
+  createdAt  DateTime @default(now())
+
+  @@map("time_entries")
 }

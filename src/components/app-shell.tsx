@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Role } from "@prisma/client";
-import { CalendarDays, ListTodo, Users, UserCircle2 } from "lucide-react";
+import { CalendarDays, ListTodo, Users, UserCircle2, Clock } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
 
@@ -33,6 +33,10 @@ export function AppShell({
               <Users className="h-4 w-4" />
               Drivers
             </Link>
+            <Link className="pressable glass flex items-center gap-2 px-3 py-2" href="/manager/hours">
+              <Clock className="h-4 w-4" />
+              Uren overzicht
+            </Link>
             <Link className="pressable glass flex items-center gap-2 px-3 py-2" href="/account">
               <UserCircle2 className="h-4 w-4" />
               Account
@@ -64,6 +68,12 @@ export function AppShell({
           </Link>
           <Link className="pressable glass px-3 py-1 text-sm" href="/driver/availability">
             Availability
+          </Link>
+          <Link className="pressable glass px-3 py-1 text-sm" href="/driver/hours">
+            Uren invoeren
+          </Link>
+          <Link className="pressable glass px-3 py-1 text-sm" href="/driver/hours/week">
+            Weekoverzicht
           </Link>
           <Link className="pressable glass px-3 py-1 text-sm" href="/account">
             Account
