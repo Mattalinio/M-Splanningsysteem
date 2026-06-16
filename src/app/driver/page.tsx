@@ -1,32 +1,10 @@
-import { DriverScheduleClient } from "@/components/driver-schedule-client";
+import { DriverDashboard } from "@/components/driver-dashboard";
 import { requireRole } from "@/lib/guards";
-import { getWeekDates } from "@/lib/planning";
-import { prisma } from "@/lib/prisma";
+import { getISOWeek } from "@/lib/hours";
 
 export default async function DriverPage() {
-  const session = await requireRole("DRIVER");
+  // Sessie-check; de dienstdata komt per gebruiker via /api/time-entries (gefilterd op userId).
+  await requireRole("DRIVER");
 
-  const assignments = await prisma.assignment.findMany({
-    where: { userId: session.user.id },
-    include: { shift: true },
-    orderBy: [{ shift: { date: "asc" } }, { shift: { startHour: "asc" } }],
-  });
-
-  return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Driver Dashboard</h1>
-      <DriverScheduleClient
-        initialWeek={getWeekDates()[0]}
-        items={assignments.map((assignment) => ({
-          id: assignment.id,
-          date: assignment.shift.date,
-          startHour: assignment.shift.startHour,
-          endHour: assignment.shift.endHour,
-          whereNeeded: assignment.shift.whereNeeded,
-          status: assignment.shift.status,
-          blockType: assignment.shift.blockType,
-        }))}
-      />
-    </section>
-  );
+  return <DriverDashboard initialWeek={getISOWeek(new Date())} />;
 }

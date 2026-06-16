@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, Suspense, useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
@@ -10,6 +11,7 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
+  const registered = searchParams.get("registered");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,14 +23,20 @@ function LoginContent() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md items-center px-4">
       <section className="glass w-full p-6">
-        <h1 className="text-2xl font-semibold">Driver Planning Login</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Use your account credentials to continue.</p>
+        <h1 className="text-2xl font-semibold">Inloggen</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Log in met je accountgegevens om verder te gaan.</p>
+
+        {registered ? (
+          <p className="mt-4 rounded-xl bg-green-100 px-3 py-2 text-sm text-green-800 dark:bg-green-900/30 dark:text-green-300">
+            Account aangemaakt. Je kunt nu inloggen.
+          </p>
+        ) : null}
 
         <form className="mt-5 space-y-3" onSubmit={onSubmit}>
           <label className="block text-sm">
-            Email
+            E-mail
             <input
-              className="mt-1 w-full rounded-xl border bg-white/70 px-3 py-2 text-sm dark:bg-slate-950/50"
+              className="mt-1 w-full rounded-xl border bg-white/70 px-3 py-2 text-sm dark:bg-black/20"
               required
               type="email"
               value={email}
@@ -37,9 +45,9 @@ function LoginContent() {
           </label>
 
           <label className="block text-sm">
-            Password
+            Wachtwoord
             <input
-              className="mt-1 w-full rounded-xl border bg-white/70 px-3 py-2 text-sm dark:bg-slate-950/50"
+              className="mt-1 w-full rounded-xl border bg-white/70 px-3 py-2 text-sm dark:bg-black/20"
               required
               type="password"
               value={password}
@@ -47,12 +55,19 @@ function LoginContent() {
             />
           </label>
 
-          {error ? <p className="text-sm text-red-600">Invalid email or password.</p> : null}
+          {error ? <p className="text-sm text-red-600">Onjuist e-mailadres of wachtwoord.</p> : null}
 
-          <button className="pressable w-full rounded-xl bg-black px-3 py-2 text-white dark:bg-white dark:text-black" disabled={loading} type="submit">
-            {loading ? "Signing in..." : "Login"}
+          <button className="pressable w-full rounded-xl bg-primary px-3 py-2 text-primary-foreground" disabled={loading} type="submit">
+            {loading ? "Bezig met inloggen..." : "Inloggen"}
           </button>
         </form>
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Nog geen account?{" "}
+          <Link className="underline" href="/register">
+            Registreer
+          </Link>
+        </p>
       </section>
     </main>
   );

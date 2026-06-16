@@ -14,37 +14,45 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-dhl: var(--dhl);
   --color-dragonfly: var(--dragonfly);
   --radius-xl: 1rem;
 }
 
+/* Warm "delivery van" palet: zandbeige achtergrond, warm-witte kaarten,
+   caramel accent. DHL = amber, Dragonfly = blauw als datakleuren. */
 :root {
-  --background: #eef2ff;
-  --foreground: #0f172a;
-  --card: rgba(255, 255, 255, 0.55);
-  --card-foreground: #111827;
-  --border: rgba(255, 255, 255, 0.6);
-  --muted: rgba(255, 255, 255, 0.35);
-  --muted-foreground: #475569;
-  --primary: #111827;
-  --primary-foreground: #f8fafc;
-  --dhl: #ffcc00;
-  --dragonfly: #00afa0;
+  --background: #ece6dc;
+  --foreground: #34302a;
+  --card: rgba(252, 251, 248, 0.72);
+  --card-foreground: #34302a;
+  --border: rgba(176, 166, 148, 0.45);
+  --muted: rgba(252, 251, 248, 0.4);
+  --muted-foreground: #8a8377;
+  --primary: #34302a;
+  --primary-foreground: #fcfbf8;
+  --accent: #c18a4b;
+  --accent-foreground: #ffffff;
+  --dhl: #f5b800;
+  --dragonfly: #2e6fb0;
 }
 
 .dark {
-  --background: #020617;
-  --foreground: #e2e8f0;
-  --card: rgba(15, 23, 42, 0.55);
-  --card-foreground: #e2e8f0;
-  --border: rgba(148, 163, 184, 0.35);
-  --muted: rgba(15, 23, 42, 0.35);
-  --muted-foreground: #94a3b8;
-  --primary: #f8fafc;
-  --primary-foreground: #0f172a;
-  --dhl: #ffcc00;
-  --dragonfly: #00afa0;
+  --background: #1f1c18;
+  --foreground: #ece6dc;
+  --card: rgba(42, 39, 34, 0.66);
+  --card-foreground: #ece6dc;
+  --border: rgba(140, 131, 119, 0.3);
+  --muted: rgba(42, 39, 34, 0.4);
+  --muted-foreground: #ab9f8d;
+  --primary: #ece6dc;
+  --primary-foreground: #2a2722;
+  --accent: #c9925a;
+  --accent-foreground: #1f1c18;
+  --dhl: #f5b800;
+  --dragonfly: #2e6fb0;
 }
 
 * {
@@ -58,17 +66,13 @@ body {
 
 body {
   @apply bg-background text-foreground antialiased;
-  background-image:
-    radial-gradient(circle at 20% 15%, rgba(99, 102, 241, 0.2), transparent 40%),
-    radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.14), transparent 38%),
-    radial-gradient(circle at 10% 80%, rgba(16, 185, 129, 0.12), transparent 38%);
+  /* Zeer subtiele warme gradient boven-in. */
+  background-image: radial-gradient(120% 80% at 50% -20%, rgba(193, 138, 75, 0.12), transparent 60%);
+  background-attachment: fixed;
 }
 
 .dark body {
-  background-image:
-    radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.25), transparent 45%),
-    radial-gradient(circle at 85% 0%, rgba(20, 184, 166, 0.2), transparent 42%),
-    radial-gradient(circle at 0% 100%, rgba(14, 165, 233, 0.18), transparent 42%);
+  background-image: radial-gradient(120% 80% at 50% -20%, rgba(201, 146, 90, 0.14), transparent 60%);
 }
 
 .glass {
@@ -82,4 +86,103 @@ body {
 
 .today-highlight {
   @apply ring-2 ring-sky-400 ring-offset-1;
+}
+
+/* ===== Van-navbar (driver) ===== */
+.van-item {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.van-item:hover {
+  transform: translateY(-3px);
+}
+/* Van-kleuren schakelen mee met het thema: crème in light, donkergrijs in dark.
+   De labels/iconen staan ÓP de bus, dus die flippen mee (donker -> licht). */
+:root {
+  --van-body-1: #fcfbf8;
+  --van-body-2: #e7e4dd;
+  --van-edge: #dcd6ca;
+  --van-ink: #5c564d;
+  --van-ink-active: #34302a;
+  --van-name: #34302a;
+  --van-role: #8a8377;
+  --van-toggle-bg: #fbfaf7;
+  --van-toggle-border: #d9d3c6;
+}
+.dark {
+  --van-body-1: #3a3631;
+  --van-body-2: #2a2722;
+  --van-edge: #4a463d;
+  --van-ink: #b8b1a4;
+  --van-ink-active: #f0ece3;
+  --van-name: #f0ece3;
+  --van-role: #a89f90;
+  --van-toggle-bg: #2a2722;
+  --van-toggle-border: #4a463d;
+}
+.van-stop-1 {
+  stop-color: var(--van-body-1);
+}
+.van-stop-2 {
+  stop-color: var(--van-body-2);
+}
+.van-lbl {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  fill: var(--van-ink);
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+.van-item:hover .van-lbl,
+.van-item.active .van-lbl {
+  fill: var(--van-ink-active);
+}
+.van-item.active .van-lbl {
+  font-weight: 600;
+}
+.van-icon {
+  fill: none;
+  stroke: var(--van-ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.van-item:hover .van-icon,
+.van-item.active .van-icon {
+  stroke: var(--van-ink-active);
+}
+.van-accent {
+  fill: #c18a4b;
+}
+.van-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  fill: var(--van-name);
+  text-anchor: middle;
+}
+.van-role {
+  font-size: 10px;
+  fill: var(--van-role);
+  letter-spacing: 0.3px;
+  text-anchor: middle;
+}
+.van-ticon {
+  fill: none;
+  stroke: var(--van-ink);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  cursor: pointer;
+}
+.van-ticon.sel {
+  stroke: #c18a4b;
+}
+@media (prefers-reduced-motion: reduce) {
+  .van-item {
+    transition: none;
+  }
+  .van-item:hover {
+    transform: none;
+  }
 }

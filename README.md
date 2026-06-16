@@ -6,8 +6,8 @@ A fresh planning MVP for one manager and drivers.
 - Next.js App Router + TypeScript
 - Tailwind CSS (class-based dark mode)
 - shadcn-style UI primitives + glass design
-- Prisma + SQLite
-- NextAuth (Credentials)
+- Prisma + PostgreSQL (Prisma 7 `@prisma/adapter-pg` driver adapter)
+- NextAuth (Credentials, bcrypt-gehashte wachtwoorden)
 - zod validation
 - lucide-react icons
 
@@ -121,6 +121,50 @@ These are seeded in `prisma/seed.ts` (not shown on login UI):
 15. Verify locked availability cannot be edited/deleted when overlapping assigned shifts.
 16. Open `/account`, change name and password.
 17. Toggle Light/Dark/System in app shell and confirm persistence.
+
+## Zelf-registratie & uren-registratie (live multi-user)
+
+### Nieuwe routes
+- `POST /api/auth/register` — maakt een nieuwe gebruiker aan met rol `DRIVER`
+  (e-mail uniek-check, bcrypt-hash, nette foutmelding bij bestaand adres).
+- `GET/POST /api/time-entries` — eigen uren van de driver ophalen/aanmaken.
+- `PUT/DELETE /api/time-entries/[id]` — eigen dienst bewerken/verwijderen
+  (eigenaarscontrole op `driverId` uit de sessie).
+- `/register` — registratiepagina (naam, e-mail, wachtwoord + bevestigen).
+- `/driver/hours/week` — het uren-scherm voor drivers (`/driver/hours` redirect hierheen).
+
+### Driver bereikt zijn uren
+Na inloggen komt een driver op `/driver`. In de navigatie staat **Mijn uren**
+(of ga direct naar `/driver/hours/week`). Daar: weeknavigatie, uren toevoegen
+met live berekende duur, bewerken/verwijderen, weektotaal en een kopieerbare uitdraai.
+
+### Berekening
+Decimale uren = eind − start, **geen pauze eraf**. Eindtijd < starttijd telt als
+nachtdienst (+24 uur). Notatie met komma zonder onnodige nullen (`6`, `4,5`, `8,25`).
+
+## Deployment op Vercel
+
+### Vereiste environment variables
+| Variabele | Voorbeeld / uitleg |
+| --- | --- |
+| `DATABASE_URL` | Postgres connection string (Vercel Postgres / Neon / Supabase) |
+| `NEXTAUTH_SECRET` | lang willekeurig geheim — `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | de productie-URL van de deploy, bv. `https://jouw-app.vercel.app` |
+
+### Build & migraties
+- `npm run build` draait `prisma generate && next build`.
+- `npm run vercel-build` (door Vercel automatisch gebruikt) draait
+  `prisma generate && prisma migrate deploy && next build`, zodat migraties bij
+  elke deploy worden uitgevoerd.
+
+### Eigen account naar Manager promoveren
+Registreren maakt altijd een `DRIVER`. Promoveer jezelf eenmalig via een query
+op de Postgres-database, bijvoorbeeld:
+```sql
+UPDATE users SET role = 'MANAGER' WHERE email = 'jouw@email.nl';
+```
+(of via `npx prisma studio` het `role`-veld op `MANAGER` zetten). Log daarna
+opnieuw in zodat de nieuwe rol in de sessie komt.
 
 ## Known Limitations
 - Bulk mini-calendar is month-by-month (single month view with Prev/Next), not a full-range planner.

@@ -1,13 +1,6 @@
-import { requireRole } from "@/lib/guards";
-import { UrenForm } from "./uren-form";
+import { redirect } from "next/navigation";
 
-export default async function UrenInvoerenPage() {
-  await requireRole("DRIVER");
-
-  return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Uren invoeren</h1>
-      <UrenForm />
-    </section>
-  );
+// Uren invoeren en het weekoverzicht zijn samengevoegd in één scherm.
+export default function UrenPage() {
+  redirect("/driver/hours/week");
 }

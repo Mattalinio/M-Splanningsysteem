@@ -25,15 +25,15 @@ export default async function DriverAvailabilityPage() {
       <div className="glass p-4">
         <h2 className="mb-2 text-lg font-semibold">Per-day availability</h2>
         <form action={addAvailabilityAction} className="grid gap-2 md:grid-cols-4">
-          <input className="rounded border bg-white/70 px-2 py-1 dark:bg-slate-900/50" name="date" required type="date" />
-          <select className="rounded border bg-white/70 px-2 py-1 dark:bg-slate-900/50" defaultValue={9} name="startHour">
+          <input className="rounded border bg-white/70 px-2 py-1 dark:bg-black/20" name="date" required type="date" />
+          <select className="rounded border bg-white/70 px-2 py-1 dark:bg-black/20" defaultValue={9} name="startHour">
             {HOURS.map((hour) => (
               <option key={hour} value={hour}>
                 {hourLabel(hour)}
               </option>
             ))}
           </select>
-          <select className="rounded border bg-white/70 px-2 py-1 dark:bg-slate-900/50" defaultValue={17} name="endHour">
+          <select className="rounded border bg-white/70 px-2 py-1 dark:bg-black/20" defaultValue={17} name="endHour">
             {HOURS.map((hour) => (
               <option key={hour} value={hour}>
                 {hourLabel(hour)}
@@ -69,15 +69,15 @@ export default async function DriverAvailabilityPage() {
               <div className="space-y-2">
                 <form action={updateAvailabilityAction} className="grid gap-2 md:grid-cols-5">
                   <input name="availabilityId" type="hidden" value={availability.id} />
-                  <input className="rounded border bg-white/70 px-2 py-1 dark:bg-slate-900/50" defaultValue={availability.date} name="date" required type="date" />
-                  <select className="rounded border bg-white/70 px-2 py-1 dark:bg-slate-900/50" defaultValue={availability.startHour} name="startHour">
+                  <input className="rounded border bg-white/70 px-2 py-1 dark:bg-black/20" defaultValue={availability.date} name="date" required type="date" />
+                  <select className="rounded border bg-white/70 px-2 py-1 dark:bg-black/20" defaultValue={availability.startHour} name="startHour">
                     {HOURS.map((hour) => (
                       <option key={hour} value={hour}>
                         {hourLabel(hour)}
                       </option>
                     ))}
                   </select>
-                  <select className="rounded border bg-white/70 px-2 py-1 dark:bg-slate-900/50" defaultValue={availability.endHour} name="endHour">
+                  <select className="rounded border bg-white/70 px-2 py-1 dark:bg-black/20" defaultValue={availability.endHour} name="endHour">
                     {HOURS.map((hour) => (
                       <option key={hour} value={hour}>
                         {hourLabel(hour)}

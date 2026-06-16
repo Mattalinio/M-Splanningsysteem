@@ -1,0 +1,311 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Clock, Package, MapPin } from "lucide-react";
+import {
+  dayAbbrev,
+  decimalHours,
+  formatDayLong,
+  formatHours,
+  formatRangeLabel,
+  getISOWeek,
+  getWeekDays,
+  getWeekRange,
+  isoDateKey,
+  nextWeek,
+  prevWeek,
+  weekParam,
+  type IsoWeek,
+} from "@/lib/hours";
+
+type ShiftType = "DHL_OCHTEND" | "DRAGONFLY_MIDDAG";
+
+type Shift = {
+  id: string;
+  date: string;
+  type: ShiftType;
+  startTime: string | null;
+  endTime: string | null;
+  packages: number | null;
+  stops: number | null;
+};
+
+function localTodayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function shiftHours(s: Shift): number {
+  if (s.type !== "DRAGONFLY_MIDDAG" || !s.startTime || !s.endTime) return 0;
+  return decimalHours(s.startTime, s.endTime) ?? 0;
+}
+
+export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
+  const [current, setCurrent] = useState<IsoWeek>(initialWeek);
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const range = useMemo(() => getWeekRange(current.year, current.week), [current]);
+  const weekDays = useMemo(() => getWeekDays(current.year, current.week), [current]);
+  const todayKey = useMemo(() => localTodayKey(), []);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const res = await fetch(`/api/shifts?week=${weekParam(current)}`);
+    setShifts(res.ok ? await res.json() : []);
+    setLoading(false);
+  }, [current]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Diensten per dag (key = UTC datum).
+  const byDay = useMemo(() => {
+    const map = new Map<string, Shift[]>();
+    for (const s of shifts) {
+      const key = isoDateKey(new Date(s.date));
+      const arr = map.get(key) ?? [];
+      arr.push(s);
+      map.set(key, arr);
+    }
+    return map;
+  }, [shifts]);
+
+  const dragonfly = useMemo(
+    () =>
+      shifts
+        .filter((s) => s.type === "DRAGONFLY_MIDDAG")
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    [shifts],
+  );
+  const dhl = useMemo(
+    () =>
+      shifts
+        .filter((s) => s.type === "DHL_OCHTEND")
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    [shifts],
+  );
+
+  const totalDragonflyHours = useMemo(() => dragonfly.reduce((s, x) => s + shiftHours(x), 0), [dragonfly]);
+  const totalPackages = useMemo(() => dhl.reduce((s, x) => s + (x.packages ?? 0), 0), [dhl]);
+  const totalStops = useMemo(() => dhl.reduce((s, x) => s + (x.stops ?? 0), 0), [dhl]);
+
+  // Eerstvolgende dag (vandaag of later in deze week) met diensten.
+  const nextDay = useMemo(() => {
+    for (const day of weekDays) {
+      const key = isoDateKey(day);
+      if (key >= todayKey && byDay.has(key)) {
+        return { day, key, shifts: byDay.get(key)! };
+      }
+    }
+    return null;
+  }, [weekDays, byDay, todayKey]);
+
+  const hasShifts = shifts.length > 0;
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold">Dashboard</h1>
+
+      {/* Overzichtskaarten */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={<Clock className="h-4 w-4" />} label="Dragonfly uren" value={formatHours(totalDragonflyHours)} suffix="uur" accent="blue" />
+        <StatCard icon={<Package className="h-4 w-4" />} label="DHL pakketten" value={`${totalPackages}`} accent="amber" />
+        <StatCard icon={<MapPin className="h-4 w-4" />} label="DHL stops" value={`${totalStops}`} accent="amber" />
+        <div className="glass p-5">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Volgende dienst</div>
+          {nextDay ? (
+            <div className="mt-2">
+              <div className="text-2xl font-semibold capitalize">
+                {nextDay.key === todayKey ? "vandaag" : formatDayLong(nextDay.day)}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {nextDay.shifts.map((s) => (
+                  <TypeChip key={s.id} type={s.type} hours={shiftHours(s)} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2 text-3xl font-semibold">Geen</div>
+          )}
+        </div>
+      </div>
+
+      {/* Weeksectie */}
+      <section className="glass space-y-5 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Week {current.week}</h2>
+            <p className="text-sm text-muted-foreground">{formatRangeLabel(range.start, range.end)}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="pressable glass flex items-center gap-1 px-3 py-1.5 text-sm" onClick={() => setCurrent(prevWeek(current))} type="button">
+              <ChevronLeft className="h-4 w-4" />
+              Vorige
+            </button>
+            <button className="pressable glass px-3 py-1.5 text-sm" onClick={() => setCurrent(getISOWeek(new Date()))} type="button">
+              Vandaag
+            </button>
+            <button className="pressable glass flex items-center gap-1 px-3 py-1.5 text-sm" onClick={() => setCurrent(nextWeek(current))} type="button">
+              Volgende
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Weekstrip */}
+        <div className="grid grid-cols-7 gap-2">
+          {weekDays.map((day) => {
+            const key = isoDateKey(day);
+            const dayShifts = byDay.get(key) ?? [];
+            const isToday = key === todayKey;
+            return (
+              <div
+                key={key}
+                className={`flex min-h-[92px] flex-col items-center gap-1.5 rounded-2xl border px-1 py-2 text-center ${
+                  isToday ? "border-sky-400 ring-1 ring-sky-400" : "border-border/60"
+                }`}
+              >
+                <span className="text-xs text-muted-foreground">{dayAbbrev(day)}</span>
+                <span className="text-base font-semibold tabular-nums">{day.getUTCDate()}</span>
+                {dayShifts.length === 0 ? (
+                  <span className="mt-1 text-sm text-muted-foreground">—</span>
+                ) : (
+                  <div className="flex w-full flex-col items-stretch gap-1">
+                    {dayShifts
+                      .sort((a, b) => a.type.localeCompare(b.type))
+                      .map((s) => (
+                        <span
+                          key={s.id}
+                          className={`truncate rounded-md px-1 py-0.5 text-[10px] font-medium ${
+                            s.type === "DHL_OCHTEND" ? "bg-amber-400 text-black" : "bg-blue-500 text-white"
+                          }`}
+                        >
+                          {s.type === "DHL_OCHTEND"
+                            ? "DHL"
+                            : shiftHours(s) > 0
+                              ? `${formatHours(shiftHours(s))}u`
+                              : "DF"}
+                        </span>
+                      ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {loading ? (
+          <p className="rounded-xl border border-border/60 p-6 text-center text-sm text-muted-foreground">Laden…</p>
+        ) : !hasShifts ? (
+          <p className="rounded-xl border border-border/60 p-6 text-center text-sm text-muted-foreground">
+            Nog geen diensten deze week.
+          </p>
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-2">
+            {/* Dragonfly-lijst */}
+            <div className="space-y-2">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                Dragonfly · uren
+              </h3>
+              {dragonfly.length === 0 ? (
+                <p className="rounded-xl border border-border/60 p-4 text-sm text-muted-foreground">Geen Dragonfly-diensten.</p>
+              ) : (
+                <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
+                  {dragonfly.map((s) => {
+                    const hours = shiftHours(s);
+                    return (
+                      <li className="flex items-center gap-3 px-4 py-2.5 text-sm" key={s.id}>
+                        <span className="w-20 shrink-0 font-medium">{formatDayLong(new Date(s.date))}</span>
+                        <span className="text-muted-foreground">
+                          {s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : "nog in te vullen"}
+                        </span>
+                        <span className="ml-auto font-semibold tabular-nums">
+                          {s.startTime && s.endTime ? `${formatHours(hours)} uur` : "—"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <div className="flex items-center justify-between px-1 text-sm font-semibold">
+                <span>Totaal Dragonfly</span>
+                <span className="tabular-nums">{formatHours(totalDragonflyHours)} uur</span>
+              </div>
+            </div>
+
+            {/* DHL-lijst */}
+            <div className="space-y-2">
+              <h3 className="flex items-center gap-2 text-sm font-semibold">
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                DHL · pakketten &amp; stops
+              </h3>
+              {dhl.length === 0 ? (
+                <p className="rounded-xl border border-border/60 p-4 text-sm text-muted-foreground">Geen DHL-diensten.</p>
+              ) : (
+                <ul className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
+                  {dhl.map((s) => (
+                    <li className="flex items-center gap-3 px-4 py-2.5 text-sm" key={s.id}>
+                      <span className="w-20 shrink-0 font-medium">{formatDayLong(new Date(s.date))}</span>
+                      <span className="ml-auto tabular-nums text-muted-foreground">
+                        {s.packages !== null || s.stops !== null
+                          ? `${s.packages ?? 0} pakketten · ${s.stops ?? 0} stops`
+                          : "nog in te vullen"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="flex items-center justify-between px-1 text-sm font-semibold">
+                <span>Totaal DHL</span>
+                <span className="tabular-nums">
+                  {totalPackages} pakketten · {totalStops} stops
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function TypeChip({ type, hours }: { type: ShiftType; hours: number }) {
+  if (type === "DHL_OCHTEND") {
+    return <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-medium text-black">DHL ochtend</span>;
+  }
+  return (
+    <span className="rounded-full bg-blue-500 px-2 py-0.5 text-xs font-medium text-white">
+      Dragonfly{hours > 0 ? ` · ${formatHours(hours)}u` : ""}
+    </span>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  suffix,
+  accent,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  suffix?: string;
+  accent: "blue" | "amber";
+}) {
+  return (
+    <div className="glass p-5">
+      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className={accent === "blue" ? "text-blue-500" : "text-amber-500"}>{icon}</span>
+        {label}
+      </div>
+      <div className="mt-2 flex items-baseline gap-1">
+        <span className="text-3xl font-semibold tabular-nums">{value}</span>
+        {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
+      </div>
+    </div>
+  );
+}

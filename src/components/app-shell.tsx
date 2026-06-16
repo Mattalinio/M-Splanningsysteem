@@ -3,6 +3,8 @@ import { Role } from "@prisma/client";
 import { CalendarDays, ListTodo, Users, UserCircle2, Clock } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/sign-out-button";
+import { DriverNav } from "@/components/driver-nav";
+import { DriverVanNav } from "@/components/driver-van-nav";
 
 export function AppShell({
   role,
@@ -55,34 +57,41 @@ export function AppShell({
     );
   }
 
+  const initials = getInitials(name);
+
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-4 p-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-slate-500">Driver</p>
-          <h1 className="text-lg font-semibold">{name}</h1>
+    <div className="mx-auto flex min-h-screen w-full max-w-[1100px] flex-col gap-6 p-4 sm:p-6">
+      {/* Desktop: van-navbar */}
+      <div className="hidden md:block">
+        <DriverVanNav name={name} />
+      </div>
+
+      {/* Mobiel: compacte balk (van schaalt te klein op smalle schermen) */}
+      <header className="glass flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:hidden">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+            {initials}
+          </span>
+          <div className="leading-tight">
+            <p className="font-semibold">{name}</p>
+            <p className="text-xs text-muted-foreground">Chauffeur</p>
+          </div>
         </div>
-        <nav className="flex flex-wrap items-center gap-2">
-          <Link className="pressable glass px-3 py-1 text-sm" href="/driver">
-            Dashboard
-          </Link>
-          <Link className="pressable glass px-3 py-1 text-sm" href="/driver/availability">
-            Availability
-          </Link>
-          <Link className="pressable glass px-3 py-1 text-sm" href="/driver/hours">
-            Uren invoeren
-          </Link>
-          <Link className="pressable glass px-3 py-1 text-sm" href="/driver/hours/week">
-            Weekoverzicht
-          </Link>
-          <Link className="pressable glass px-3 py-1 text-sm" href="/account">
-            Account
-          </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <DriverNav />
           <ThemeToggle />
           <SignOutButton />
-        </nav>
+        </div>
       </header>
-      <main>{children}</main>
+
+      <main className="min-w-0">{children}</main>
     </div>
   );
+}
+
+function getInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
 }

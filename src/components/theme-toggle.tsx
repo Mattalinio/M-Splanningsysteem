@@ -16,7 +16,7 @@ export function ThemeToggle() {
     <div className="glass flex items-center gap-1 p-1 text-xs">
       {ITEMS.map((item) => (
         <button
-          className={`pressable flex items-center gap-1 rounded-full px-2 py-1 ${theme === item.value ? "bg-black text-white dark:bg-white dark:text-black" : ""}`}
+          className={`pressable flex items-center gap-1 rounded-full px-2 py-1 ${theme === item.value ? "bg-accent text-accent-foreground" : ""}`}
           key={item.value}
           onClick={() => setTheme(item.value)}
           type="button"

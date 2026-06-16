@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 enum Role {
@@ -37,6 +37,12 @@ enum ShiftBlockType {
   DRAGONFLY
 }
 
+// Type dienst dat een driver zelf registreert.
+enum ShiftType {
+  DHL_OCHTEND
+  DRAGONFLY_MIDDAG
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -51,6 +57,7 @@ model User {
   availabilities Availability[]
   assignments    Assignment[]
   timeEntries    TimeEntry[]
+  driverShifts   DriverShift[]
 
   @@map("users")
 }
@@ -117,6 +124,29 @@ model TimeEntry {
   totalHours Float
   company    String   @default("dragonfly")
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
+  @@index([driverId, date])
   @@map("time_entries")
+}
+
+// Dienst die een driver zelf registreert: per dag max. één DHL-ochtend
+// en/of één Dragonfly-middag. Uren (start/eind) gelden alleen voor Dragonfly,
+// pakketten/stops alleen voor DHL. Alles wordt achteraf ingevuld en is optioneel.
+model DriverShift {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime
+  type      ShiftType
+  startTime String? // "HH:mm" — alleen DRAGONFLY_MIDDAG
+  endTime   String? // "HH:mm" — alleen DRAGONFLY_MIDDAG
+  packages  Int? // alleen DHL_OCHTEND
+  stops     Int? // alleen DHL_OCHTEND
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, date, type])
+  @@index([userId, date])
+  @@map("driver_shifts")
 }
