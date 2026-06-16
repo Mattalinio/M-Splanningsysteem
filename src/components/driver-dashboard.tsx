@@ -109,15 +109,15 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
       <h1 className="text-2xl font-semibold">Dashboard</h1>
 
       {/* Overzichtskaarten */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard icon={<Clock className="h-4 w-4" />} label="Dragonfly uren" value={formatHours(totalDragonflyHours)} suffix="uur" accent="blue" />
         <StatCard icon={<Package className="h-4 w-4" />} label="DHL pakketten" value={`${totalPackages}`} accent="amber" />
         <StatCard icon={<MapPin className="h-4 w-4" />} label="DHL stops" value={`${totalStops}`} accent="amber" />
-        <div className="glass p-5">
+        <div className="glass p-4 sm:p-5">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Volgende dienst</div>
           {nextDay ? (
             <div className="mt-2">
-              <div className="text-2xl font-semibold capitalize">
+              <div className="text-xl font-semibold capitalize sm:text-2xl">
                 {nextDay.key === todayKey ? "vandaag" : formatDayLong(nextDay.day)}
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
@@ -127,7 +127,7 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
               </div>
             </div>
           ) : (
-            <div className="mt-2 text-3xl font-semibold">Geen</div>
+            <div className="mt-2 text-2xl font-semibold sm:text-3xl">Geen</div>
           )}
         </div>
       </div>
@@ -155,27 +155,38 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
         </div>
 
         {/* Weekstrip */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {weekDays.map((day) => {
             const key = isoDateKey(day);
-            const dayShifts = byDay.get(key) ?? [];
+            const dayShifts = [...(byDay.get(key) ?? [])].sort((a, b) => a.type.localeCompare(b.type));
             const isToday = key === todayKey;
             return (
               <div
                 key={key}
-                className={`flex min-h-[92px] flex-col items-center gap-1.5 rounded-2xl border px-1 py-2 text-center ${
+                className={`flex min-h-[68px] flex-col items-center gap-1 rounded-xl border px-0.5 py-2 text-center sm:min-h-[92px] sm:gap-1.5 sm:rounded-2xl sm:px-1 ${
                   isToday ? "border-sky-400 ring-1 ring-sky-400" : "border-border/60"
                 }`}
               >
-                <span className="text-xs text-muted-foreground">{dayAbbrev(day)}</span>
+                <span className="text-[11px] text-muted-foreground sm:text-xs">{dayAbbrev(day)}</span>
                 <span className="text-base font-semibold tabular-nums">{day.getUTCDate()}</span>
                 {dayShifts.length === 0 ? (
-                  <span className="mt-1 text-sm text-muted-foreground">—</span>
+                  <span className="mt-0.5 text-sm text-muted-foreground">—</span>
                 ) : (
-                  <div className="flex w-full flex-col items-stretch gap-1">
-                    {dayShifts
-                      .sort((a, b) => a.type.localeCompare(b.type))
-                      .map((s) => (
+                  <>
+                    {/* mobiel: compacte gekleurde stippen */}
+                    <div className="mt-0.5 flex flex-wrap items-center justify-center gap-1 sm:hidden">
+                      {dayShifts.map((s) => (
+                        <span
+                          key={s.id}
+                          className={`h-2 w-2 rounded-full ${
+                            s.type === "DHL_OCHTEND" ? "bg-amber-400" : "bg-blue-500"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    {/* desktop: labels met uren */}
+                    <div className="hidden w-full flex-col items-stretch gap-1 sm:flex">
+                      {dayShifts.map((s) => (
                         <span
                           key={s.id}
                           className={`truncate rounded-md px-1 py-0.5 text-[10px] font-medium ${
@@ -189,7 +200,8 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
                               : "DF"}
                         </span>
                       ))}
-                  </div>
+                    </div>
+                  </>
                 )}
               </div>
             );
@@ -297,13 +309,13 @@ function StatCard({
   accent: "blue" | "amber";
 }) {
   return (
-    <div className="glass p-5">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="glass p-4 sm:p-5">
+      <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:gap-2 sm:text-xs">
         <span className={accent === "blue" ? "text-blue-500" : "text-amber-500"}>{icon}</span>
         {label}
       </div>
       <div className="mt-2 flex items-baseline gap-1">
-        <span className="text-3xl font-semibold tabular-nums">{value}</span>
+        <span className="text-2xl font-semibold tabular-nums sm:text-3xl">{value}</span>
         {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
       </div>
     </div>
