@@ -4,7 +4,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
+  // Ingelogd blijven: sessie 90 dagen geldig en ververst dagelijks bij gebruik,
+  // zodat je bij regelmatig openen praktisch niet uitgelogd wordt.
+  session: {
+    strategy: "jwt",
+    maxAge: 90 * 24 * 60 * 60, // 90 dagen
+    updateAge: 24 * 60 * 60, // dagelijks verversen
+  },
   pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
