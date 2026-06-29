@@ -17,8 +17,12 @@ import {
   weekParam,
   type IsoWeek,
 } from "@/lib/hours";
-
-type ShiftType = "DHL_OCHTEND" | "DRAGONFLY_MIDDAG";
+import {
+  SHIFT_TYPE_LABEL,
+  SHIFT_TYPE_SHORT,
+  isDHLType,
+  type DriverShiftType as ShiftType,
+} from "@/lib/driver-shift-types";
 
 type Shift = {
   id: string;
@@ -82,7 +86,7 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
   const dhl = useMemo(
     () =>
       shifts
-        .filter((s) => s.type === "DHL_OCHTEND")
+        .filter((s) => isDHLType(s.type))
         .sort((a, b) => a.date.localeCompare(b.date)),
     [shifts],
   );
@@ -179,7 +183,7 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
                         <span
                           key={s.id}
                           className={`h-2 w-2 rounded-full ${
-                            s.type === "DHL_OCHTEND" ? "bg-amber-400" : "bg-blue-500"
+                            isDHLType(s.type) ? "bg-amber-400" : "bg-blue-500"
                           }`}
                         />
                       ))}
@@ -190,11 +194,11 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
                         <span
                           key={s.id}
                           className={`truncate rounded-md px-1 py-0.5 text-[10px] font-medium ${
-                            s.type === "DHL_OCHTEND" ? "bg-amber-400 text-black" : "bg-blue-500 text-white"
+                            isDHLType(s.type) ? "bg-amber-400 text-black" : "bg-blue-500 text-white"
                           }`}
                         >
-                          {s.type === "DHL_OCHTEND"
-                            ? "DHL"
+                          {isDHLType(s.type)
+                            ? SHIFT_TYPE_SHORT[s.type]
                             : shiftHours(s) > 0
                               ? `${formatHours(shiftHours(s))}u`
                               : "DF"}
@@ -261,6 +265,9 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
                   {dhl.map((s) => (
                     <li className="flex items-center gap-3 px-4 py-2.5 text-sm" key={s.id}>
                       <span className="w-20 shrink-0 font-medium">{formatDayLong(new Date(s.date))}</span>
+                      <span className="shrink-0 rounded bg-amber-400/20 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                        {SHIFT_TYPE_LABEL[s.type]}
+                      </span>
                       <span className="ml-auto tabular-nums text-muted-foreground">
                         {s.packages !== null || s.stops !== null
                           ? `${s.packages ?? 0} pakketten · ${s.stops ?? 0} stops`
@@ -285,8 +292,12 @@ export function DriverDashboard({ initialWeek }: { initialWeek: IsoWeek }) {
 }
 
 function TypeChip({ type, hours }: { type: ShiftType; hours: number }) {
-  if (type === "DHL_OCHTEND") {
-    return <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-medium text-black">DHL ochtend</span>;
+  if (isDHLType(type)) {
+    return (
+      <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-medium text-black">
+        {SHIFT_TYPE_LABEL[type]}
+      </span>
+    );
   }
   return (
     <span className="rounded-full bg-blue-500 px-2 py-0.5 text-xs font-medium text-white">

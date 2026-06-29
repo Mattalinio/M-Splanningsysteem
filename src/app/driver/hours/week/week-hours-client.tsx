@@ -17,8 +17,12 @@ import {
   weekParam,
   type IsoWeek,
 } from "@/lib/hours";
-
-type ShiftType = "DHL_OCHTEND" | "DRAGONFLY_MIDDAG";
+import {
+  DRIVER_SHIFT_TYPES,
+  SHIFT_TYPE_LABEL,
+  isDHLType,
+  type DriverShiftType as ShiftType,
+} from "@/lib/driver-shift-types";
 
 type Shift = {
   id: string;
@@ -148,8 +152,6 @@ export function WeekHoursClient({ initialWeek }: { initialWeek: IsoWeek }) {
           {weekDays.map((day) => {
             const key = isoDateKey(day);
             const isToday = key === todayKey;
-            const dhl = shiftFor(key, "DHL_OCHTEND");
-            const df = shiftFor(key, "DRAGONFLY_MIDDAG");
             return (
               <div
                 key={key}
@@ -162,20 +164,16 @@ export function WeekHoursClient({ initialWeek }: { initialWeek: IsoWeek }) {
                 </div>
 
                 <div className="grid flex-1 gap-2 sm:grid-cols-2">
-                  <Slot
-                    type="DHL_OCHTEND"
-                    shift={dhl}
-                    onAdd={() => addShift(day, "DHL_OCHTEND")}
-                    onSaved={handleSaved}
-                    onDelete={deleteShift}
-                  />
-                  <Slot
-                    type="DRAGONFLY_MIDDAG"
-                    shift={df}
-                    onAdd={() => addShift(day, "DRAGONFLY_MIDDAG")}
-                    onSaved={handleSaved}
-                    onDelete={deleteShift}
-                  />
+                  {DRIVER_SHIFT_TYPES.map((t) => (
+                    <Slot
+                      key={t}
+                      type={t}
+                      shift={shiftFor(key, t)}
+                      onAdd={() => addShift(day, t)}
+                      onSaved={handleSaved}
+                      onDelete={deleteShift}
+                    />
+                  ))}
                 </div>
               </div>
             );
@@ -210,15 +208,18 @@ export function WeekHoursClient({ initialWeek }: { initialWeek: IsoWeek }) {
   );
 }
 
+const DHL_META = {
+  chip: "bg-amber-400 text-black",
+  addBorder: "border-amber-400/50 hover:border-amber-400",
+  addText: "text-amber-600 dark:text-amber-400",
+};
+
 const TYPE_META: Record<ShiftType, { label: string; chip: string; addBorder: string; addText: string }> = {
-  DHL_OCHTEND: {
-    label: "DHL ochtend",
-    chip: "bg-amber-400 text-black",
-    addBorder: "border-amber-400/50 hover:border-amber-400",
-    addText: "text-amber-600 dark:text-amber-400",
-  },
+  DHL_OCHTEND: { label: SHIFT_TYPE_LABEL.DHL_OCHTEND, ...DHL_META },
+  DHL_OCHTEND_MIDDAG: { label: SHIFT_TYPE_LABEL.DHL_OCHTEND_MIDDAG, ...DHL_META },
+  DHL_AVOND: { label: SHIFT_TYPE_LABEL.DHL_AVOND, ...DHL_META },
   DRAGONFLY_MIDDAG: {
-    label: "Dragonfly middag",
+    label: SHIFT_TYPE_LABEL.DRAGONFLY_MIDDAG,
     chip: "bg-blue-500 text-white",
     addBorder: "border-blue-500/40 hover:border-blue-500",
     addText: "text-blue-600 dark:text-blue-400",
@@ -265,7 +266,7 @@ function ShiftEditor({
   onSaved: (s: Shift) => void;
   onDelete: (id: string) => void;
 }) {
-  const isDF = shift.type === "DRAGONFLY_MIDDAG";
+  const isDF = !isDHLType(shift.type);
   const meta = TYPE_META[shift.type];
 
   const [start, setStart] = useState(shift.startTime ?? "");

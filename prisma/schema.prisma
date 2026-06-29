@@ -40,6 +40,8 @@ enum ShiftBlockType {
 // Type dienst dat een driver zelf registreert.
 enum ShiftType {
   DHL_OCHTEND
+  DHL_OCHTEND_MIDDAG
+  DHL_AVOND
   DRAGONFLY_MIDDAG
 }
 

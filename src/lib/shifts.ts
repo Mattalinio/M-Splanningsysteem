@@ -15,7 +15,7 @@ const countField = z.coerce
 
 export const shiftInputSchema = z.object({
   date: z.string().min(1, "Datum is verplicht"),
-  type: z.enum(["DHL_OCHTEND", "DRAGONFLY_MIDDAG"]),
+  type: z.enum(["DHL_OCHTEND", "DHL_OCHTEND_MIDDAG", "DHL_AVOND", "DRAGONFLY_MIDDAG"]),
   startTime: timeField,
   endTime: timeField,
   packages: countField,
@@ -47,7 +47,8 @@ export function normalizeShift(input: ShiftInput) {
     };
   }
 
-  // DHL_OCHTEND
+  // Alle DHL-varianten (DHL_OCHTEND, DHL_OCHTEND_MIDDAG, DHL_AVOND):
+  // alleen pakketten/stops, geen start/eindtijd.
   return {
     data: {
       date,
